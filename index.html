@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nosso Dia Especial</title>
+    <!-- Bootstrap CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Define a fonte Inter para todo o corpo e permite rolagem */
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #fff; /* Cor de texto padrão para telas */
+        }
+
+        /* Estilo da tela inicial com fundo cinza */
+        #initialScreen {
+            height: 100vh; /* Mantém 100vh para a tela inicial para centralização */
+            background-color: #343a40; /* Fundo cinza escuro */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.7s ease-in-out; /* Transição de opacidade para a tela inicial */
+        }
+
+        /* Estilo do botão com borda lilás neon */
+        .neon-button {
+            background-color: transparent;
+            border: 4px solid #c084fc; /* Lilás */
+            color: #fff;
+            font-size: 2rem; /* Tamanho do texto responsivo para mobile first */
+            padding: 1rem 2.5rem;
+            border-radius: 9999px; /* Bordas arredondadas */
+            text-shadow: 0 0 5px #c084fc, 0 0 10px #c084fc, 0 0 15px #c084fc; /* Efeito neon no texto */
+            box-shadow: 0 0 10px #c084fc, 0 0 20px #c084fc, 0 0 30px #c084fc; /* Efeito neon na borda */
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+        }
+
+        .neon-button:hover {
+            background-color: #c084fc; /* Fundo lilás ao passar o mouse */
+            color: #1a202c; /* Texto escuro ao passar o mouse */
+            box-shadow: 0 0 15px #a78bfa, 0 0 25px #a78bfa, 0 0 40px #a78bfa; /* Efeito neon mais forte */
+            text-shadow: none; /* Remove text shadow on hover */
+        }
+
+        /* Overlay para a transição de coração */
+        .heart-overlay {
+            position: fixed; /* Mantém fixo para cobrir a tela durante a transição */
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0); /* Inicialmente transparente */
+            z-index: 1000; /* Acima de todo o conteúdo */
+            opacity: 0;
+            transition: opacity 0.5s ease-out, background-color 0.5s ease-out;
+            pointer-events: none; /* Permite cliques através quando inativo */
+            overflow: hidden; /* Esconde corações que voam para fora da tela */
+        }
+
+        .heart-overlay.active {
+            opacity: 1;
+            background-color: rgba(0, 0, 0, 0.7); /* Escurece o fundo durante a transição */
+            pointer-events: auto; /* Bloqueia cliques quando ativo */
+        }
+
+        /* Keyframes para a animação de explosão dos corações */
+        @keyframes heartExplode {
+            0% {
+                transform: translate(0, 0) rotate(-45deg) scale(0.5); /* Começa menor */
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--translate-x), var(--translate-y)) rotate(-45deg) scale(1.2); /* Voa para fora/cima, ligeiramente maior */
+                opacity: 0;
+            }
+        }
+
+        /* Estilo para cada partícula de coração (Mobile First) */
+        .heart-particle {
+            position: absolute;
+            background-color: #c084fc; /* Cor lilás dos corações */
+            width: 20px; /* Tamanho base para mobile */
+            height: 20px;
+            border-radius: 50%;
+            transform: rotate(-45deg);
+            opacity: 0;
+        }
+
+        .heart-particle::before,
+        .heart-particle::after {
+            content: '';
+            position: absolute;
+            background-color: inherit;
+            border-radius: 50%;
+            width: 100%;
+            height: 100%;
+        }
+
+        .heart-particle::before {
+            top: -50%;
+            left: 0;
+        }
+
+        .heart-particle::after {
+            left: 50%;
+            top: 0;
+        }
+
+        /* Estilo da segunda tela */
+        #secondScreen {
+            min-height: 100vh; /* Garante altura mínima de 100vh, mas permite expansão */
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #343a40; /* Fundo cinza escuro, igual à tela inicial */
+            opacity: 0; /* Começa invisível para transição */
+            transition: opacity 1s ease-in-out; /* Transição de opacidade para a segunda tela */
+            padding: 1rem; /* Adiciona padding para telas menores */
+            box-sizing: border-box; /* Garante que padding não afeta o tamanho total */
+            position: relative; /* Necessário para posicionar as partículas de fundo */
+        }
+
+        #secondScreen.show {
+            opacity: 1;
+        }
+
+        /* Estilo do título principal (Mobile First) */
+        #secondScreen h1 {
+            font-size: 3rem; /* Tamanho base para mobile */
+            font-weight: 800;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 2rem;
+            text-align: center;
+            z-index: 1; /* Garante que o texto fique acima das partículas de fundo */
+        }
+        @media (min-width: 768px) { /* Medium devices (md) */
+            #secondScreen h1 {
+                font-size: 4rem; /* Aumenta em telas médias */
+            }
+        }
+        @media (min-width: 992px) { /* Large devices (lg) */
+            #secondScreen h1 {
+                font-size: 5rem; /* Aumenta em telas grandes */
+            }
+        }
+
+
+        /* Estilo do carrossel (Mobile First) */
+        .carousel-inner {
+            z-index: 1; /* Garante que o carrossel fique acima das partículas de fundo */
+        }
+        .carousel-inner img {
+            border-radius: 0.75rem; /* Bordas arredondadas para as fotos */
+            object-fit: cover; /* Garante que a imagem cubra a área */
+            height: 300px; /* Altura base para mobile */
+        }
+        @media (min-width: 576px) { /* Small devices (sm) */
+            .carousel-inner img {
+                height: 400px; /* Aumenta em telas pequenas/médias */
+            }
+        }
+        @media (min-width: 768px) { /* Medium devices (md) */
+            .carousel-inner img {
+                height: 500px; /* Aumenta em telas médias */
+            }
+        }
+
+        /* Estilo do contador (Mobile First) com glassmorphism */
+        .countdown-container {
+            background-color: rgba(255, 255, 255, 0.15); /* Fundo branco semi-transparente para efeito de vidro */
+            backdrop-filter: blur(10px); /* Efeito de desfoque mais pronunciado para vidro */
+            border: 1px solid rgba(192, 132, 252, 0.4); /* Borda lilás suave e semi-transparente */
+            color: #fff; /* Cor do texto dentro do contador */
+            border-radius: 0.75rem; /* Bordas arredondadas */
+            padding: 1.5rem;
+            margin-top: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Sombra sutil para profundidade */
+            text-align: center;
+            z-index: 1; /* Garante que o contador fique acima das partículas de fundo */
+        }
+
+        .countdown-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0.5rem;
+        }
+
+        /* Tamanho do valor do contador (Mobile First) */
+        .countdown-value {
+            font-size: 2.5rem; /* Tamanho base para mobile */
+            font-weight: 700;
+            line-height: 1;
+        }
+        @media (min-width: 576px) { /* Small devices (sm) */
+            .countdown-value {
+                font-size: 3rem; /* Aumenta em telas pequenas/médias */
+            }
+        }
+        @media (min-width: 768px) { /* Medium devices (md) */
+            .countdown-value {
+                font-size: 4rem; /* Aumenta em telas médias */
+            }
+        }
+
+        /* Tamanho do label do contador (Mobile First) */
+        .countdown-label {
+            font-size: 0.9rem; /* Tamanho base para mobile */
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        @media (min-width: 576px) { /* Small devices (sm) */
+            .countdown-label {
+                font-size: 1rem; /* Aumenta em telas pequenas/médias */
+            }
+        }
+        @media (min-width: 768px) { /* Medium devices (md) */
+            .countdown-label {
+                font-size: 1.1rem; /* Aumenta em telas médias */
+            }
+        }
+
+        /* --- Estilos para as animações de fundo --- */
+        #backgroundParticles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Garante que partículas não saiam do contêiner */
+            z-index: 0; /* Fica abaixo do conteúdo principal */
+            pointer-events: none; /* Não interfere com cliques */
+        }
+
+        .background-particle {
+            position: absolute;
+            background-color: rgba(192, 132, 252, 0.2); /* Cor lilás translúcida */
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            transform: rotate(-45deg); /* Para formar um coração */
+            animation: floatHeart linear infinite; /* Animação infinita */
+        }
+
+        .background-particle::before,
+        .background-particle::after {
+            content: '';
+            position: absolute;
+            background-color: inherit;
+            border-radius: 50%;
+            width: 100%;
+            height: 100%;
+        }
+
+        .background-particle::before {
+            top: -50%;
+            left: 0;
+        }
+
+        .background-particle::after {
+            left: 50%;
+            top: 0;
+        }
+
+        /* Keyframes para as partículas de fundo */
+        @keyframes floatHeart {
+            0% {
+                transform: translateY(0) rotate(-45deg) scale(0.5);
+                opacity: 0;
+            }
+            20% {
+                opacity: 0.5;
+            }
+            80% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(-45deg) scale(0.8);
+                opacity: 0;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Overlay para a transição de coração -->
+    <div id="heartOverlay" class="heart-overlay">
+        <!-- Os corações serão adicionados aqui dinamicamente pelo JavaScript -->
+    </div>
+
+    <!-- Tela Inicial -->
+    <div id="initialScreen" class="d-flex flex-column justify-content-center align-items-center">
+        <button id="startButton" class="neon-button">Iniciar</button>
+    </div>
+
+    <!-- Segunda Tela -->
+    <div id="secondScreen" class="d-none flex-column justify-content-center align-items-center">
+        <h1 class="display-3">Nosso Dia Especial</h1>
+        <p class="display-8">Contador dos nossos dias especiais, desde o início da nossa história juntos.</p>
+
+        <!-- Contêiner para as partículas de fundo -->
+        <div id="backgroundParticles"></div>
+
+        <!-- Carrossel de Imagens (Bootstrap) -->
+        <div id="imageCarousel" class="carousel slide w-75 mx-auto mb-5" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#imageCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                <button type="button" data-bs-target="#imageCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                <button type="button" data-bs-target="#imageCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+            </div>
+            <div class="carousel-inner rounded-3 shadow-lg">
+                <div class="carousel-item active">
+                    <img src="src/1.jpg" class="d-block w-100" alt="Nosso Momento 1">
+                </div>
+                <div class="carousel-item">
+                    <img src="src/2.jpg" class="d-block w-100" alt="Nosso Momento 2">
+                </div>
+                <div class="carousel-item">
+                    <img src="src/3.jpg" class="d-block w-100" alt="Nosso Momento 3">
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+
+        <!-- Contador de Tempo -->
+        <div class="countdown-container">
+            <p class="h5 mb-3 text-center">Desde 15 de Abril de 2022</p>
+            <div class="row justify-content-center">
+                <div class="col-6 col-sm-3 countdown-item">
+                    <span id="days" class="countdown-value">00</span>
+                    <span class="countdown-label">Dias</span>
+                </div>
+                <div class="col-6 col-sm-3 countdown-item">
+                    <span id="hours" class="countdown-value">00</span>
+                    <span class="countdown-label">Horas</span>
+                </div>
+                <div class="col-6 col-sm-3 countdown-item">
+                    <span id="minutes" class="countdown-value">00</span>
+                    <span class="countdown-label">Minutos</span>
+                </div>
+                <div class="col-6 col-sm-3 countdown-item">
+                    <span id="seconds" class="countdown-value">00</span>
+                    <span class="countdown-label">Segundos</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Referências aos elementos DOM
+            const initialScreen = document.getElementById('initialScreen');
+            const startButton = document.getElementById('startButton');
+            const secondScreen = document.getElementById('secondScreen');
+            const heartOverlay = document.getElementById('heartOverlay');
+            const backgroundParticlesContainer = document.getElementById('backgroundParticles');
+
+            // Elementos do contador
+            const daysEl = document.getElementById('days');
+            const hoursEl = document.getElementById('hours');
+            const minutesEl = document.getElementById('minutes');
+            const secondsEl = document.getElementById('seconds');
+
+            // Data de início do contador (15 de abril de 2022)
+            const targetDate = new Date('2022-04-15T00:00:00');
+
+            /**
+             * Cria e anima uma única partícula de coração.
+             * A partícula voa para cima e para fora, desaparecendo.
+             */
+            function createHeartParticle(startX, startY) {
+                const heart = document.createElement('div');
+                heart.classList.add('heart-particle');
+                heartOverlay.appendChild(heart);
+
+                // Define a posição inicial da partícula
+                heart.style.left = `${startX}px`;
+                heart.style.top = `${startY}px`;
+                // Inicia a partícula com opacidade 1 para que seja visível
+                heart.style.opacity = '1';
+
+                // Randomiza propriedades da animação para um efeito mais natural
+                const duration = 1.5 + Math.random() * 1; // Duração entre 1.5s e 2.5s
+                const delay = Math.random() * 0.3; // Atraso entre 0s e 0.3s
+                const horizontalMovement = (Math.random() - 0.5) * 400; // Movimento horizontal de -200px a 200px
+                const verticalMovement = -200 - (Math.random() * 200); // Movimento vertical de -200px a -400px (para cima)
+
+                // Define variáveis CSS personalizadas para a animação
+                heart.style.setProperty('--translate-x', `${horizontalMovement}px`);
+                heart.style.setProperty('--translate-y', `${verticalMovement}px`);
+                heart.style.animation = `heartExplode ${duration}s ease-out ${delay}s forwards`;
+
+                // Remove a partícula do DOM após a conclusão da animação
+                heart.addEventListener('animationend', () => {
+                    heart.remove();
+                });
+            }
+
+            /**
+             * Cria uma partícula de coração para o fundo da segunda tela.
+             * Essas partículas se movem lentamente para cima e desaparecem.
+             */
+            function createBackgroundParticle() {
+                const particle = document.createElement('div');
+                particle.classList.add('background-particle');
+                backgroundParticlesContainer.appendChild(particle);
+
+                // Define a posição inicial da partícula aleatoriamente na largura da tela
+                const startX = Math.random() * window.innerWidth;
+                const size = 10 + Math.random() * 10; // Tamanho entre 10px e 20px
+                const animationDuration = 8 + Math.random() * 7; // Duração entre 8s e 15s
+                const delay = Math.random() * 5; // Atraso na animação para que não comecem todas juntas
+
+                particle.style.left = `${startX}px`;
+                particle.style.bottom = `-20px`; // Começa um pouco abaixo da tela
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.animationDuration = `${animationDuration}s`;
+                particle.style.animationDelay = `${delay}s`;
+
+                // Remove a partícula após a animação para otimização
+                particle.addEventListener('animationend', () => {
+                    particle.remove();
+                });
+            }
+
+
+            /**
+             * Atualiza a exibição do contador de tempo.
+             * Calcula a diferença entre a data atual e a data alvo
+             * e exibe em dias, horas, minutos e segundos.
+             */
+            function updateCountdown() {
+                const now = new Date();
+                // Calcula a diferença em milissegundos
+                const difference = now.getTime() - targetDate.getTime();
+
+                // Garante que a diferença não seja negativa para datas futuras (embora aqui seja passado)
+                if (difference < 0) {
+                    daysEl.textContent = '00';
+                    hoursEl.textContent = '00';
+                    minutesEl.textContent = '00';
+                    secondsEl.textContent = '00';
+                    return;
+                }
+
+                // Calcula os componentes de tempo
+                const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+                // Atualiza o conteúdo dos elementos no DOM, garantindo dois dígitos
+                daysEl.textContent = days.toString().padStart(2, '0');
+                hoursEl.textContent = hours.toString().padStart(2, '0');
+                minutesEl.textContent = minutes.toString().padStart(2, '0');
+                secondsEl.textContent = seconds.toString().padStart(2, '0');
+            }
+
+            // Chama a função de atualização do contador uma vez para exibição inicial
+            updateCountdown();
+            // Atualiza o contador a cada segundo
+            setInterval(updateCountdown, 1000);
+
+            // Adiciona o event listener para o botão "Iniciar"
+            startButton.addEventListener('click', (event) => {
+                // Ativa o overlay de coração e seu fundo semitransparente
+                heartOverlay.classList.add('active');
+
+                // Obtém a posição do clique (ou centro do botão) para a explosão
+                const buttonRect = startButton.getBoundingClientRect();
+                const centerX = buttonRect.left + buttonRect.width / 2;
+                const centerY = buttonRect.top + buttonRect.height / 2;
+
+                // Gera múltiplos corações na posição do clique
+                const numberOfHearts = 20; // Quantidade de corações na explosão
+                for (let i = 0; i < numberOfHearts; i++) {
+                    createHeartParticle(centerX, centerY);
+                }
+
+                // Tempo para a animação dos corações e transição das telas
+                const heartAnimationDuration = 2500; // 2.5 segundos (máximo da duração randomizada dos corações)
+                const screenTransitionDuration = 700; // Tempo da transição de opacidade da tela inicial
+
+                // Inicia a transição da tela inicial para a segunda tela
+                setTimeout(() => {
+                    initialScreen.style.opacity = '0'; // Começa a transição de opacidade da tela inicial
+
+                    // Esconde a tela inicial completamente e mostra a segunda após sua transição de opacidade
+                    setTimeout(() => {
+                        initialScreen.classList.add('d-none'); // Esconde usando d-none do Bootstrap
+                        secondScreen.classList.remove('d-none'); // Mostra a segunda tela
+                        secondScreen.classList.add('show'); // Ativa a transição de opacidade da segunda tela
+
+                        // Inicia a geração de partículas de fundo após a segunda tela ser exibida
+                        setInterval(createBackgroundParticle, 500); // Gera uma partícula a cada 0.5s
+                    }, screenTransitionDuration);
+
+                    // Esconde o overlay de coração após todas as animações
+                    setTimeout(() => {
+                        heartOverlay.classList.remove('active');
+                    }, heartAnimationDuration + screenTransitionDuration); // Garante que o overlay permaneça até as animações terminarem
+                }, 500); // Pequeno atraso para que os corações comecem a aparecer antes da tela inicial sumir.
+            });
+        });
+    </script>
+</body>
+</html>
